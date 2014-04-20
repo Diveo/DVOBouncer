@@ -11,7 +11,8 @@ Sample
 
 <img src="./Demo/bounce.gif" align="middle" width="280" />
 
-####Usage:
+Background
+-------
 
 `DVOBouncer` can be implemented in one line:
 
