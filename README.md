@@ -30,5 +30,8 @@ Contact
 
 **Mo Bitar** | [@bitario](https://twitter.com/bitario)
 
+License
+-------
+DVOBouncer is available under the MIT license.
 
 
