@@ -22,7 +22,7 @@ self.bouncer = [DVOBouncer bounceScrollView:scrollView inDirection:DVOBounceDire
 
 Background
 -------
-`DVOBouncer` was built during the creation of [Diveo](http://appstore.com/diveo) to help demonstrate to users how to interact with the app.
+`DVOBouncer` was built during the creation of [Diveo](http://appstore.com/diveo), an app that lets you share beautiful videos with friends, to demonstrate how to interact with the app.
 
 Contact
 -------
