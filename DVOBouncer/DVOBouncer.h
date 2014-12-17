@@ -18,12 +18,13 @@ typedef NS_ENUM(NSInteger, DVOBounceDirection)
 
 @interface DVOBouncer : NSObject
 
-+ (instancetype)bounceScrollView:(UIScrollView *)scrollView inDirection:(DVOBounceDirection)direction;
-+ (instancetype)bounceScrollView:(UIScrollView *)scrollView inDirection:(DVOBounceDirection)direction bouncePeak:(CGFloat)bouncePeak;
+- (instancetype)initWithView:(UIView *)view NS_DESIGNATED_INITIALIZER;
 
-@property (nonatomic) UIScrollView *scrollView;
+@property (nonatomic) UIView *viewToBounce;
+
 /* Default is 1.75. Gravity behavior is a bit strange - does not reach all the way to bottom for some reason */
 @property (nonatomic) CGFloat boundaryOffset;
+
 @property (nonatomic) DVOBounceDirection bounceDirection;
 
 /** the peak of the bounce animation. default is 100 */

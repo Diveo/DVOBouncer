@@ -46,7 +46,7 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
 
 
 @interface DVOBounceItem : NSObject <UIDynamicItem>
-@property (nonatomic) UIScrollView *scrollView;
+@property (nonatomic) UIView *viewToBounce;
 @property (nonatomic) CGRect bounds;
 @property (nonatomic) CGPoint center;
 @property (nonatomic) CGAffineTransform transform;
@@ -69,7 +69,14 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
     
     CGFloat delta = center.y - previousCenter.y;
 
-    self.scrollView.contentOffset = BounceOffset(self.scrollView.contentOffset, delta, self.direction);;
+    if([self.viewToBounce isKindOfClass:[UIScrollView class]]) {
+        UIScrollView *scrollView = (UIScrollView *)self.viewToBounce;
+        scrollView.contentOffset = BounceOffset(scrollView.contentOffset, delta, self.direction);
+    } else {
+        CGRect frame = self.viewToBounce.frame;
+        frame.origin = BounceOffset(frame.origin, delta, self.direction);
+        self.viewToBounce.frame = frame;
+    }
     
     previousCenter = center;
 }
@@ -84,47 +91,18 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
 
 @implementation DVOBouncer
 {
-    CGPoint initialScrollViewOffset;
+    CGPoint initialOrigin;
     BOOL endBouncing;
 }
 
-+ (instancetype)sharedInstance
-{
-    static DVOBouncer *bouncer = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        bouncer = [DVOBouncer new];
-    });
-    
-    return bouncer;
-}
-
-- (instancetype)init
+- (instancetype)initWithView:(UIView *)view
 {
     if(self = [super init]) {
+        self.viewToBounce = view;
         _boundaryOffset = 0;
         _bouncePeak = 100;
     }
     return self;
-}
-
-+ (instancetype)bounceScrollView:(UIScrollView *)scrollView inDirection:(DVOBounceDirection)direction bouncePeak:(CGFloat)bouncePeak
-{
-    DVOBouncer *bouncer = [DVOBouncer new];
-    bouncer.scrollView = scrollView;
-    bouncer.bounceDirection = direction;
-    bouncer.bouncePeak = bouncePeak;
-    [bouncer beginBouncing];
-    return bouncer;
-}
-
-+ (instancetype)bounceScrollView:(UIScrollView *)scrollView inDirection:(DVOBounceDirection)direction
-{
-    DVOBouncer *bouncer = [DVOBouncer new];
-    bouncer.scrollView = scrollView;
-    bouncer.bounceDirection = direction;
-    [bouncer beginBouncing];
-    return bouncer;
 }
 
 - (void)beginBouncing
@@ -132,12 +110,11 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
     CGFloat itemSize = 50;
     DVOBounceItem *item = [DVOBounceItem new];
     item.bounds = CGRectMake(0, 0, itemSize, itemSize);
-    item.center = CGPointMake(0, self.scrollView.bounds.size.height - self.bouncePeak - itemSize/2.0);
+    item.center = CGPointMake(0, self.viewToBounce.bounds.size.height - self.bouncePeak - itemSize/2.0);
     item.direction = self.bounceDirection;
     self.item = item;
     
-    item.scrollView = self.scrollView;
-    self.scrollView = self.scrollView;
+    item.viewToBounce = self.viewToBounce;
     
     if(!self.animator) {
         self.animator = [[UIDynamicAnimator alloc] initWithReferenceView:nil];
@@ -146,7 +123,7 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
         [self.animator removeAllBehaviors];
     }
     
-    initialScrollViewOffset = self.scrollView.contentOffset;
+    initialOrigin = self.viewToBounce.frame.origin;
     
     UIGravityBehavior *gravity = [[UIGravityBehavior alloc] initWithItems:nil];
     gravity.magnitude = 1;
@@ -155,8 +132,8 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
     collision.collisionDelegate = self;
     
     [collision addBoundaryWithIdentifier:@"bottom"
-                               fromPoint:CGPointMake(0, self.scrollView.frame.origin.y + self.scrollView.bounds.size.height + self.boundaryOffset)
-                                 toPoint:CGPointMake(0, self.scrollView.frame.origin.y + self.scrollView.bounds.size.height + self.boundaryOffset)];
+                               fromPoint:CGPointMake(0, self.viewToBounce.frame.origin.y + self.viewToBounce.bounds.size.height + self.boundaryOffset)
+                                 toPoint:CGPointMake(0, self.viewToBounce.frame.origin.y + self.viewToBounce.bounds.size.height + self.boundaryOffset)];
     
     UIDynamicItemBehavior *bounce = [[UIDynamicItemBehavior alloc] initWithItems:nil];
     bounce.elasticity = 0.6;
@@ -172,7 +149,7 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
         CGPoint velocity = [weakBehavior linearVelocityForItem:item];
         if(fabs(velocity.y) < 0.00000005 && fabs(weakself.previousVelocity.y) > 0) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                [weakself restoreScrollViewState];
+                [weakself restoreInitialViewState];
             });
         }
         weakself.previousVelocity = velocity;
@@ -181,7 +158,14 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
     
     // animate initial offset
     [UIView animateWithDuration:0.3 animations:^{
-        self.scrollView.contentOffset = BounceOffset(self.scrollView.contentOffset, -self.bouncePeak, self.bounceDirection);
+        if([self.viewToBounce isKindOfClass:[UIScrollView class]]) {
+            UIScrollView *scrollView = (UIScrollView *)self.viewToBounce;
+            [scrollView setContentOffset:BounceOffset(scrollView.contentOffset, -self.bouncePeak, self.bounceDirection)];
+        } else {
+            CGRect frame = self.viewToBounce.frame;
+            frame.origin = BounceOffset(frame.origin, -self.bouncePeak, self.bounceDirection);
+            self.viewToBounce.frame = frame;
+        }
     } completion:^(BOOL finished) {
         if(endBouncing) {
             return;
@@ -192,9 +176,15 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
     }];
 }
 
-- (void)restoreScrollViewState
+- (void)restoreInitialViewState
 {
-    [self.scrollView setContentOffset:initialScrollViewOffset animated:NO];
+    if([self.viewToBounce isKindOfClass:[UIScrollView class]]) {
+        [(UIScrollView *)self.viewToBounce setContentOffset:initialOrigin animated:NO];
+    } else {
+        CGRect frame = self.viewToBounce.frame;
+        frame.origin = initialOrigin;
+        self.viewToBounce.frame = frame;
+    }
 }
 
 - (void)endBouncing
