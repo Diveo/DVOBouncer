@@ -30,6 +30,8 @@ typedef NS_ENUM(NSInteger, DVOBounceDirection)
 /** the peak of the bounce animation. default is 100 */
 @property (nonatomic) CGFloat bouncePeak;
 
+- (void)restoreInitialViewState;
+
 - (void)beginBouncing;
 
 - (void)endBouncing;
