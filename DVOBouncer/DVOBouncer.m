@@ -105,6 +105,9 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
     return self;
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnonnull"
+
 - (void)beginBouncing
 {
     CGFloat itemSize = 50;
@@ -175,6 +178,8 @@ DVOBounceDirection OppositeDirection(DVOBounceDirection direction)
         [bounce addItem:item];
     }];
 }
+
+#pragma clang diagnostic pop
 
 - (void)restoreInitialViewState
 {

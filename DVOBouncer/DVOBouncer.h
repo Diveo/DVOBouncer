@@ -19,7 +19,7 @@ typedef NS_ENUM(NSInteger, DVOBounceDirection)
 
 @interface DVOBouncer : NSObject
 
-- (instancetype)initWithView:(UIView *)view NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithView:(UIView *)view;
 
 @property (nonatomic) UIView *viewToBounce;
 
